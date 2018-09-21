@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8"/>
+    <script type="text/javascript" src="http://jquerywidget.com/public/script/jquery.min.js"></script>
+    <style type="text/css">
+    ul,li {
+        margin:0;
+        padding:0;
+    }
+    .search {
+        display: inline-block;
+        float:left;
+        width: calc(100% - 83px);
+        margin-left:500px;
+        height:22px;
+        position: relative;
+    }
+   .search ul:empty{
+        background:none!important;
+        border: none!important;
+    }
+    .search-out {
+        position: absolute;
+        width:200px;
+        height: 300px;
+        z-index: 10;
+        top:23px;
+        color: #7e8c8d;
+        overflow-x: hidden;
+        overflow-y: auto;
+        margin-top:5px;
+    }
+    .search-out ul li {
+        font-size: 12px;
+        height:25px;
+        /*li溢出省略*/
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .search-out ul li:hover {
+        background-color:#edf0f1;
+    }
+    
+</style>
+    <script type="text/javascript">
+        $(function(){
+            commonHistory();
+        });
+        function commonHistory(){
+            let input = document.getElementById('input'),
+                body = document.getElementsByClassName('search')[0],
+                ul = document.getElementById('ul');
+            input.addEventListener('focus',function(){
+                console.log(body)
+                var htmlText = '';
+                var json={s:["1111","222","333","444"]}
+                for(var i = 0; i < json.s.length; i++){
+                    htmlText += '<li>' + json['s'][i] + '</li>';
+                }
+                ul.innerHTML = htmlText;
+                ul.style.border = "solid 1px #dee6e8";
+                ul.style.background= "white";
+
+            });
+            input.addEventListener('blur',function(){
+                var htmlText = '';
+                var json={s:[]}
+                for(var i = 0; i < json.s.length; i++){
+                    htmlText += '<li>' + json['s'][i] + '</li>';
+                }
+                setTimeout(function () {
+                    ul.style.border = "";
+                    ul.style.background= "";
+                    ul.innerHTML = htmlText;
+                }, 200);
+            });
+            $(".search-out").on("click",$("li"),function(e){
+                $("#input").val($(e.target).text());
+           
+        })
+        //监听input事件
+        input.addEventListener('input', function(){
+            console.log(input.value)
+            var val = encodeURI(input.value);
+            ul.innerHTML = '';//清空上一次请求所插入的li
+            jsonp({
+                    url: 'https://sp0.baidu.com/5a1Fazu8AA54nxGko9WTAnF6hhy/su?wd='+ val + '&cb=',
+                    time: 3000,
+                    callback: function(json){
+                        var htmlText = '';
+                        for(var i = 0; i < json.s.length; i++){
+                            htmlText += '<li>' + json['s'][i] + '</li>';
+                        }
+                        ul.innerHTML = htmlText;
+                    },
+                    fail: function (mes) {
+                        alert(mes);
+                    }
+                });
+            });
+            function jsonp(objects){
+                objects = objects || {};
+                if(!objects.url || !objects.callback){
+                    throw new Error('参数不合法');
+                }
+            //创建script标签并插入
+                var callbackName =  ('jsonp_' + Math.random()).replace(".", "");//随机生成callbackName
+                var script = document.createElement('script');
+                var body = document.getElementsByClassName('search')[0];
+                body.appendChild(script);
+                window[callbackName] = function (json) {
+                    body.removeChild(script);
+                    clearTimeout(script.timer);
+                    window[callbackName] = null;
+                    objects.callback && objects.callback(json);
+                };
+
+                //发出请求
+                script.src = objects.url + callbackName;
+
+                //响应时间
+                if(objects.time){
+                    script.timer = setTimeout(function () {
+                        window[callbackName] = null;
+                        body.removeChild(script);
+                        objects.fail && objects.fail('超时');
+                    }, objects.time);
+                }
+            }
+        }        
+   
+
+    </script>
+</head>
+<body>
+    <div class="search">
+        <input id="input" type="text" placeholder="搜索材质">
+        <span><button>搜索</button></span>
+            <div class="search-out">
+                <ul id="ul"></ul>
+            </div>
+</div> 
+ 
+</body>
+</html>
